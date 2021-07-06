@@ -8,8 +8,8 @@ class Seeder():
     def __init__(self, mongo_collection, query=None) -> None:
         if query is None:
             query = {
-                "crawl_details": {
-                    "$size": 0,
+                "scraped": {
+                    "$eq": False,
                 }
             }
         self.query = query
