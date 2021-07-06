@@ -73,58 +73,77 @@ class IITDSpider(CrawlSpider):
     #     return item
 
     def parse_item(self,response) :
-        self.logger.info('Hello World Checking this function')
-        body=self.extract_body(response)
+        if response.status==200:
+            self.logger.info(f'Scraping Page with url {response.url}')
+            body=self.extract_body(response)
 
-        links=response.css('a')
-        links_url=links.css('::attr(href)').extract()
-        links_text=links.css('::text').extract()
-        remove='\n \t \f \r \b'
-        for text in links_text:
-            text=text.lstrip(remove)
-            text=text.rstrip(remove)
+            links=response.css('a')
+            links_url=links.css('::attr(href)').extract()
+            links_text=links.css('::text').extract()
+            remove='\n \t \f \r \b'
+            for text in links_text:
+                text=text.lstrip(remove)
+                text=text.rstrip(remove)
 
-        item = {
-            "url":response.url,    
-            "status":response.status,
-            "title":response.css('title::text').get(),
-            "meta_data":response.css('meta').extract(),
-            "body":body,
-            "crawled_on":datetime.datetime.now(),
-            "links_url":links_url,
-            "links_text":links_text,
-        }
-        # doc = self.mongo_collection.find_one_and_update({"url": response.url},{"$setOnInsert": {"crawl_details": item,"crawled_on": datetime.datetime.now()}},upsert=True,return_document=ReturnDocument.AFTER)
-        myquery = { 'url': response.url }
-        newvalues = { "$set": { 'crawl_details' : item, 'scraped':True } }
-        self.mongo_collection.update_one(myquery, newvalues)
-        
-        yield item 
+            item = {
+                "url":response.url,    
+                "status":response.status,
+                "title":response.css('title::text').get(),
+                "meta_data":response.css('meta').extract(),
+                "body":body,
+                "crawled_on":datetime.datetime.now(),
+                "links_url":links_url,
+                "links_text":links_text,
+            }
+            # doc = self.mongo_collection.find_one_and_update({"url": response.url},{"$setOnInsert": {"crawl_details": item,"crawled_on": datetime.datetime.now()}},upsert=True,return_document=ReturnDocument.AFTER)
+            myquery = { 'url': response.url }
+            newvalues = { "$set": { 'crawl_details' : item, 'scraped':True } }
+            self.mongo_collection.update_one(myquery, newvalues)
+            
+            yield item 
+        else:
+            yield None
 
     def extract_body(self,response):
+        body=[]
         # cheking for paragraphs
         paras=response.css('p::text').extract()
+        wrd_count=0
         for str in paras :
-            if(self.check_string(str)==False):
+            val=self.check_string(str)
+            if(val==-1):
                 paras.remove(str)
-        if paras:
+            else:
+                wrd_count+=val
+        if (wrd_count>25):
             return paras
+        else:
+            # if no element of very less number of words are these in paras, then it is concatenated with headings and bolds tags.
+            body+=paras
 
         # checking for headings <h2>
-        headings=response.css('h2::text')
+        headings=response.css('h2::text').extract()
         for str in headings:
-            if(self.check_string(str)==False):
+            val=self.check_string(str)
+            if(val==-1):
                 headings.remove(str)
-        if headings:
-            return headings
+            else:
+                wrd_count+=val
+        body+=headings
+        if (wrd_count>25):
+            return body
 
         # checking for bolds tags
-        bolds=response.css('b::text')
+        bolds=response.css('b::text').extract()
         for str in bolds:
-            if(self.check_string(str)==False):
+            val=self.check_string(str)
+            if(val==-1):
                 bolds.remove(str)
-        if bolds:
-            return bolds
+            else:
+                wrd_count+=val
+        body+=bolds
+        if wrd_count>2:
+            return body
         
         # none found
         return ['No information is available regarding body']
@@ -134,13 +153,13 @@ class IITDSpider(CrawlSpider):
         str=str.lstrip(remove)
         str=str.rstrip(remove)
         if(len(str)<=2):
-            return False
+            return -1
         else:
             count=0  # counting number of spaces to get an estimate of number of words
             for c in str:
                 if(c==' '):
                     count+=1
             if(count<4):
-                return False
+                return -1
             else:
-                return True
+                return count
