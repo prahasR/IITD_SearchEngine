@@ -86,3 +86,12 @@ ROBOTSTXT_OBEY = True
 #HTTPCACHE_DIR = 'httpcache'
 #HTTPCACHE_IGNORE_HTTP_CODES = []
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
+FEEDS={
+    'elastic':{
+        'format':'elastic'
+
+    }
+}
+FEED_EXPORTERS = {
+    'elastic': 'crawling__iitd.elastic_exporter.ElasticExporter'
+}

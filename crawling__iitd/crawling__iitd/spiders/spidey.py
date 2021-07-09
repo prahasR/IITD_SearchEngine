@@ -29,7 +29,8 @@ class IITDSpider(CrawlSpider):
         for url in self.start_urls:
             doc = self.mongo_collection.find_one_and_update({"url": url}, {"$setOnInsert": {
                 "crawl_details": {},
-                "scraped": False}
+                "scraped": False,
+                "indexed":False}
                 }, upsert=True, return_document=ReturnDocument.AFTER)
         
         #seeder returns the crawl_info collection...so that Request could be yielded for priviosly crawled links(doc).
@@ -47,7 +48,8 @@ class IITDSpider(CrawlSpider):
         if "mongo_doc" not in request.meta:
             request.meta["mongo_doc"] = self.mongo_collection.find_one_and_update({"url": request.url},{"$setOnInsert": {
                 "crawl_details": {},
-                "scraped": False}
+                "scraped": False,
+                "indexed":False}
                 },upsert=True,return_document=ReturnDocument.AFTER)
 
         #Drop this request if it has already been crawled
@@ -97,7 +99,7 @@ class IITDSpider(CrawlSpider):
             }
             # doc = self.mongo_collection.find_one_and_update({"url": response.url},{"$setOnInsert": {"crawl_details": item,"crawled_on": datetime.datetime.now()}},upsert=True,return_document=ReturnDocument.AFTER)
             myquery = { 'url': response.url }
-            newvalues = { "$set": { 'crawl_details' : item, 'scraped':True } }
+            newvalues = { "$set": {'scraped':True } }
             self.mongo_collection.update_one(myquery, newvalues)
             
             yield item 

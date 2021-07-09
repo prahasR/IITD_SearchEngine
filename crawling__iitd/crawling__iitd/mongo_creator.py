@@ -22,6 +22,13 @@ def getMongoCollection():# -> Collection:
     collection = db[MONGO_COLLNAME]
     return collection
 
+#ELASTIC_URI = os.getenv('ELASTIC_URI')
+ELASTIC_URI ="localhost:9200"
+if ELASTIC_URI is None:
+    raise Exception('ELASTIC_URI not set')
+#ELASTIC_INDEX_NAME = os.getenv('ELASTIC_INDEX_NAME', 'iitd_sites')
+ELASTIC_INDEX_NAME = "iit"
+
 mongo_collection=getMongoCollection()
 
 
