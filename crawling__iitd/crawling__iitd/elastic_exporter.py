@@ -2,20 +2,20 @@ from logging import warn
 from typing import overload
 from scrapy.exporters import BaseItemExporter
 from elasticsearch import helpers, Elasticsearch
-from elasticsearch.helpers import  streaming_bulk
+from elasticsearch.helpers import  streaming_bulk,bulk
 from multiprocessing import Queue, Process, log_to_stderr
 from datetime import datetime
 import warnings
 import logging
 
-#from crawler.config import ELASTIC_URI, ELASTIC_INDEX_NAME, mongo_collection
+
+# from crawling__iitd.config import ELASTIC_URI,ELASTIC_INDEX_NAME
 from crawling__iitd.mongo_creator import getMongoCollection
 from pymongo.mongo_client import MongoClient
 from pymongo.collection import Collection
 
-
-ELASTIC_URI ="localhost:9200"
-ELASTIC_INDEX_NAME = "iit"
+ELASTIC_URI="localhost:9200"
+ELASTIC_INDEX_NAME='iitd_sites'
 class ElasticExporter(BaseItemExporter):
     
     def __init__(self, _, **kwargs) -> None:
@@ -41,22 +41,34 @@ class ElasticExporter(BaseItemExporter):
         response_body=item["body"]
         
         #for bulk export
-        self.list.append({"index":'iitd_sites',"type":'_doc',"id":response_url,"body":'hello'})
-        
-        
+        if not self.client.exists(index=ELASTIC_INDEX_NAME, id=response_url):
+            self.list.append({"_index":ELASTIC_INDEX_NAME,
+                            "_type":"_doc",
+                            "_id":response_url,
+                            "url":response_url,
+                            "title":response_title, 
+                            "body":response_body,
+                            })
+
         new_doc=self.mongo_collection.find({"url": response_url})
-       
         #condition to be added
-        self.client.index(index='iit',doc_type='_doc',body={'url':response_url,'title':response_title, "body":response_body})
-        print("list lenth changed to ",len(self.list),"  and RESP_URL SAVED IN ELASTICSEARCH IS: ",response_url,"\n")
-      
-        
-        self.mongo_collection.update_one(
-            {"url": response_url},
-            {
-                "$set": {"indexed":True}
-            },
-            upsert=True,
-        )
+
+        # print("list length changed to ",len(self.list),"  and RESP_URL SAVED IN ELASTICSEARCH IS: ",response_url,"\n")
+        if len(self.list)>=50 :
+            # bulk enter data into elastic search
+            bulk(self.client,self.list)
+
+            # checking if indexing was successful or not.                
+            for data in self.list:    
+                if self.client.exists(index=ELASTIC_INDEX_NAME, id=data["url"]):    
+                    self.mongo_collection.update_one(
+                        {"url": data["url"]},
+                        {
+                            "$set": {"indexed":True}
+                        },
+                        upsert=True,
+                    )
+            self.list=[]
+
 
        
