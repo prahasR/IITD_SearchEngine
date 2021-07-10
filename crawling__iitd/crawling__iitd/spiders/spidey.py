@@ -105,48 +105,63 @@ class IITDSpider(CrawlSpider):
             yield None
 
     def extract_body(self,response):
+        # all text data in heading, para, a, b tags is extracted
         body=[]
         # cheking for paragraphs
         paras=response.css('p::text').extract()
-        wrd_count=0
         for str in paras :
-            val=self.check_string(str)
-            if(val==-1):
+            if(self.check_string(str)==-1):
                 paras.remove(str)
-            else:
-                wrd_count+=val
-        if (wrd_count>25):
-            return paras
-        else:
-            # if no element of very less number of words are these in paras, then it is concatenated with headings and bolds tags.
-            body+=paras
+        body+=paras
 
         # checking for headings <h2>
         headings=response.css('h2::text').extract()
         for str in headings:
-            val=self.check_string(str)
-            if(val==-1):
+            if(self.check_string(str)==-1):
                 headings.remove(str)
-            else:
-                wrd_count+=val
         body+=headings
-        if (wrd_count>25):
-            return body
-
+        
         # checking for bolds tags
         bolds=response.css('b::text').extract()
         for str in bolds:
-            val=self.check_string(str)
-            if(val==-1):
+            if(self.check_string(str)==-1):
                 bolds.remove(str)
-            else:
-                wrd_count+=val
         body+=bolds
-        if wrd_count>2:
-            return body
-        
-        # none found
-        return ['No information is available regarding body']
+
+        # checking for all headings
+        headings1=response.css('h1::text').extract()
+        for str in headings1:
+            if(self.check_string(str)==-1):
+                headings1.remove(str)
+        body+=headings1
+
+        headings3=response.css('h3::text').extract()
+        for str in headings3:
+            if(self.check_string(str)==-1):
+                headings3.remove(str)
+        body+=headings3
+
+        headings4=response.css('h4::text').extract()
+        for str in headings4:
+            if(self.check_string(str)==-1):
+                headings4.remove(str)
+        body+=headings4
+
+        headings5=response.css('h5::text').extract()
+        for str in headings5:
+            if(self.check_string(str)==-1):
+                headings5.remove(str)
+        body+=headings5
+
+        # checking for link texts
+        links=response.css('a::text').extract()
+        for str in links:
+            if(self.check_string(str)==-1):
+                links.remove(str)
+        body+=links
+
+
+        return body
 
     def check_string(self,str):
         remove="\n \t \f \r \b  "
@@ -155,11 +170,4 @@ class IITDSpider(CrawlSpider):
         if(len(str)<=2):
             return -1
         else:
-            count=0  # counting number of spaces to get an estimate of number of words
-            for c in str:
-                if(c==' '):
-                    count+=1
-            if(count<4):
-                return -1
-            else:
-                return count
+            return 1
