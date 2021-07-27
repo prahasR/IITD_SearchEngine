@@ -19,6 +19,9 @@ NEWSPIDER_MODULE = 'crawling__iitd.spiders'
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = True
 
+ITEM_PIPELINES={'scrapy.pipelines.images.ImagesPipeline':1}
+IMAGES_STORE='local_folder'
+
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 #CONCURRENT_REQUESTS = 32
 
@@ -95,3 +98,9 @@ FEEDS={
 FEED_EXPORTERS = {
     'elastic': 'crawling__iitd.elastic_exporter.ElasticExporter'
 }
+
+#for crawling in BFO
+DEPTH_PRIORITY = 1
+SCHEDULER_DISK_QUEUE = 'scrapy.squeues.PickleFifoDiskQueue'
+SCHEDULER_MEMORY_QUEUE = 'scrapy.squeues.FifoMemoryQueue'
+SCHEDULER_PRIORITY_QUEUE='scrapy.pqueues.ScrapyPriorityQueue'
