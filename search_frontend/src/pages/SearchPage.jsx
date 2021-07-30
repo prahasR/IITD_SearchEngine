@@ -47,7 +47,7 @@ function SearchPage({query, all="_active",profs="",courses=""}) {
         "must" : {
           "multi_match" : {
             "query":      term ?? location['pathname'].split("/")[2],
-            "fields":     profsOnly==="_active" ? [ "url^3", "link_text"] : coursesOnly==="_active" ? [ "url^3", "link_text"] : ["body", "url"],
+            "fields":     profsOnly==="_active" ? [ "url^3", "body"] : coursesOnly==="_active" ? [ "url^3", "body"] : ["title^2", "body"],
             "fuzziness": 6,
           }
         },
@@ -67,7 +67,7 @@ function SearchPage({query, all="_active",profs="",courses=""}) {
         "must" : {
           "multi_match" : {
             "query":      term ?? location['pathname'].split("/")[2],
-            "fields":     profsOnly==="_active" ? [ "url^3", "link_text"] : coursesOnly==="_active" ? [ "url^3", "link_text"] : ["body", "url"],
+            "fields":     profsOnly==="_active" ? [ "url^3", "body"] : coursesOnly==="_active" ? [ "url^3", "body"] : ["title^2", "body"],
             "fuzziness": 6,
           }
         },
@@ -171,10 +171,6 @@ function SearchPage({query, all="_active",profs="",courses=""}) {
               <CourseIcon/>
               <span>Courses</span>
             </button>
-            <button className={'searchPage_option'} onClick={searchImg}>
-              <ImageIcon/>
-              <span>Images</span>
-            </button>
             </div>
       </div>
 
@@ -183,20 +179,23 @@ function SearchPage({query, all="_active",profs="",courses=""}) {
         <div className="searchPage__results">
           <p className="searchPage__resultCount">
             {data['hits']['total']['value']} hits for '<strong>{term ?? location['pathname'].split("/")[2]}</strong>' ({data['took']} milliseconds) ・ Couldn't find your needle? <u>Report</u>
-          </p>
-          {data['hits']['hits'].map((item) => (
+          </p>        
+
+           {data['hits']['hits'].map((item) => (
             <div className="searchPage__result" key={item['_source']['id']}>
-              <a className="searchPage__resultLink" href={item['_source']['url']}>
+              <a className="searchPage__resultLink" href={item['_source']['url']} onClick={() => linkClicked(item['_source'])}>
                 {item['_source']['url']}
               </a>
-              {item['_source']['url'] && item['_source']['title'] && <a href={item['_source']['url']} className="searchPage__resultTitle">
-              <h2><img src={`http://www.google.com/s2/favicons?domain=`+item['_source']['url']}/>{" " + item['_source']['title'].slice(7, -8)}</h2>
+              {item['_source']['url'] && item['_source']['title'] && <a href={item['_source']['url']} className="searchPage__resultTitle" onClick={() => linkClicked(item['_source'])}>
+              <h2><img src={`http://www.google.com/s2/favicons?domain=`+item['_source']['url']}/>{" " + item['_source']['title']}</h2>
               </a>}
               <div className="searchPage__snippet">
-              {item['_source']['link_text']}
+              {item['_source']['body'].slice(0,3)}
               </div>
             </div>
-          ))}
+          ))} 
+          
+
         </div>
       )}
     {data && data['hits']['total']['value']>0 && <div className="pagination"><Pagination count={data['hits']['total']['value']%10===0 ? data['hits']['total']['value']/10 : parseInt(data['hits']['total']['value']/10)+1 }  page={page} onChange={handleChange}/></div>}
@@ -205,8 +204,20 @@ function SearchPage({query, all="_active",profs="",courses=""}) {
 
   );
 }
+ 
+function linkClicked(item)
+{
+alert(item["visits"]);
+client.update({
+    index: "iitd_sites",
+    id:item["url"],
+    body: {
+      doc:{
+        visits:item["visits"]+1
+      }
+    }
+});
+} 
 
 
 export default SearchPage;
-
-
