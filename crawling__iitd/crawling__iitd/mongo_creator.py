@@ -20,7 +20,26 @@ def getMongoCollection():# -> Collection:
     client = MongoClient(host=MONGODB_URI)
     db = client[MONGO_DBNAME]
     collection = db[MONGO_COLLNAME]
-    return collection
+    collections={
+    "pdf": db["PDFs"],
+    "text" : db["Documents"],
+    "ppt" : db["PPTs"],
+    "spreadsheet" : db["Spreadsheets"],
+    "programs" : db["Programs"],
+    }
+    return [collection,collections]
+
+def getMongoCollectionForFiles():
+    client = MongoClient(host=MONGODB_URI)
+    db = client[MONGO_DBNAME]
+    collections={
+    "pdf": db["PDFs"],
+    "document" : db["Documents"],
+    "ppt" : db["PPTs"],
+    "spreadsheet" : db["Spreadsheets"],
+    "program" : db["Programs"],
+    }
+    return collections
 
 #ELASTIC_URI = os.getenv('ELASTIC_URI')
 ELASTIC_URI ="localhost:9200"

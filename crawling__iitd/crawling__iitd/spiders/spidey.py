@@ -5,7 +5,8 @@ from scrapy.spiders import CrawlSpider, Rule
 from scrapy.linkextractors import LinkExtractor
 from pymongo.collection import Collection, ReturnDocument
 from crawling__iitd.seeder import Seeder
-from crawling__iitd.mongo_creator import getMongoCollection
+from crawling__iitd.mongo_creator import MONGODB_URI, MONGO_DBNAME, getMongoCollection
+from pymongo.mongo_client import MongoClient
 
 class IITDSpider(CrawlSpider):
     name = "iitd"
@@ -23,9 +24,12 @@ class IITDSpider(CrawlSpider):
         'https://home.iitd.ac.in',
     ]
 
+    temp=getMongoCollection()
+
     #start_request generates request for all links
     def start_requests(self):
-        self.mongo_collection: Collection = getMongoCollection()
+        
+        self.mongo_collection: Collection = self.temp[0]
         for url in self.start_urls:
             doc = self.mongo_collection.find_one_and_update({"url": url}, {"$setOnInsert": {
                 "crawl_details": {},
@@ -59,21 +63,6 @@ class IITDSpider(CrawlSpider):
         
         return request
     
-    # def parse_item(self, response):
-    #     self.logger.info('Hello World Checking this function')
-    #     item = {
-    #         "request": response.request,
-    #         "elastic_doc": {
-    #             'url': response.url,
-    #             'status': response.status,
-    #             'title': response.xpath("//title").get(),
-    #             'body': response.xpath("//body").get(),
-    #             'link_text': response.meta['link_text'],
-    #         },
-    #     }
-
-    #     return item
-
     def parse_item(self,response) :
         if response.status==200:
             self.logger.info(f'Scraping Page with url {response.url}')
@@ -84,6 +73,7 @@ class IITDSpider(CrawlSpider):
             links=response.css('a')
             links_url=links.css('::attr(href)').extract()
             links_text=links.css('::text').extract()
+            link_dict=self.extract_links(response,links_url,links_text)
             remove='\n \t \f \r \b'
             for text in links_text:
                 text=text.lstrip(remove)
@@ -100,9 +90,18 @@ class IITDSpider(CrawlSpider):
                 "body":body,
                 "image_urls":clean_link_img,
                 "crawled_on":datetime.datetime.now(),
-                "links_url":links_url,
-                "links_text":links_text,
+                "links":link_dict
             }
+            
+            # keys=["pdf","ppt","text","spreadsheet","programs"]
+
+            # for key in keys:
+            #     temp3=self.temp[1][key]
+            #     for temp4 in link_dict[key]:
+            #         temp3.find_one_and_update({"url": temp4},{"$setOnInsert": {
+            #         "details":"hello"
+            #         }},upsert=True,return_document=ReturnDocument.AFTER)
+
             # doc = self.mongo_collection.find_one_and_update({"url": response.url},{"$setOnInsert": {"crawl_details": item,"crawled_on": datetime.datetime.now()}},upsert=True,return_document=ReturnDocument.AFTER)
             myquery = { 'url': response.url }
             newvalues = { "$set": {'scraped':True } }
@@ -111,6 +110,50 @@ class IITDSpider(CrawlSpider):
             yield item 
         else:
             yield None
+
+    def extract_links(self,response,links_url,links_text):
+        links={
+            "pdf":[],
+            "ppt":[],
+            "text":[],
+            "spreadsheet":[],
+            "programs":[],
+            "webpages":[]
+            }
+
+        keys=["pdf","ppt","text","spreadsheet","programs"]
+
+        formats=[
+            [".pdf"],
+            [".pptx",".ppt",".pptm",".potx",".pot",".potm",".pps",".ppsm",".ppsx"],
+            [".docx",".txt",".doc",".docm"],
+            [".csv",".xla",".xls",".xlsm",".xlsx",".xlt","xltx","xltm"],
+            [".c",".cpp",".java",".py"]
+            ]
+
+        for (text,link) in zip(links_text,links_url):
+            link=link.rstrip(' ')
+            link=link.lstrip(" ./")
+            if not link.startswith("http"):
+                link=response.url+"/"+link
+            found=False
+            index=0
+            for x1 in formats:
+                key=keys[index]
+                index+=1
+                for x2 in x1:
+                    found=False
+                    if link.endswith(x2):
+                        found=True
+                        links[key].append({"text":text,"link":link})
+                        break
+                if found:
+                    break
+            
+            if not found:
+                links["webpages"].append({"text":text,"link":link})
+        return links
+        
 
     def extract_body(self,response):
         body=[]
