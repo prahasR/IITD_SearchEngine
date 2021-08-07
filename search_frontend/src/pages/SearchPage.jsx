@@ -43,41 +43,61 @@ function SearchPage({query, all="_active",profs="",courses=""}) {
     "from": (page-1)*10,
     "size": 10,
     "query": {
-      "bool": {  
-        "must" : {
-          "multi_match" : {
-            "query":      term ?? location['pathname'].split("/")[2],
-            "fields":     profsOnly==="_active" ? [ "url^3", "body"] : coursesOnly==="_active" ? [ "url^3", "body"] : ["title^2", "body"],
-            "fuzziness": 6,
+      "script_score": {
+        "query":{
+          "bool": {  
+            "must" : {
+              "multi_match" : {
+                "query":      term ?? location['pathname'].split("/")[2],
+                "fields":     profsOnly==="_active" ? [ "url^3", "body"] : coursesOnly==="_active" ? [ "url^3", "body"] : ["title^2", "body"],
+                "fuzziness": 6,
+              }
+            },
+            "filter": {
+              "regexp": {
+                "url": coursesOnly==="_active" ? ".*[a-zA-Z][a-zA-Z][a-zA-Z].*[1-9][0-9][0-9]" : ".*",
+              }
+            }
           }
         },
-        "filter": {
-          "regexp": {
-            "url": coursesOnly==="_active" ? ".*[a-zA-Z][a-zA-Z][a-zA-Z].*[1-9][0-9][0-9]" : ".*",
-          }
-       }
+        "script": {
+          "source" : "doc['visits'].value/10 * _score",
+        },   
       }
-    }
+    },
+    "sort" :[
+        { "visits":{"order":"desc"} }
+    ]
   }
   const queryBodyTermUpdate = {
     "from": (page-1)*10,
     "size": 10,
     "query": {
-      "bool": {  
-        "must" : {
-          "multi_match" : {
-            "query":      term ?? location['pathname'].split("/")[2],
-            "fields":     profsOnly==="_active" ? [ "url^3", "body"] : coursesOnly==="_active" ? [ "url^3", "body"] : ["title^2", "body"],
-            "fuzziness": 6,
-          }
+      "script_score": {
+        "query" :{
+          "bool": {  
+            "must" : {
+              "multi_match" : {
+                "query":      term ?? location['pathname'].split("/")[2],
+                "fields":     profsOnly==="_active" ? [ "url^3", "body"] : coursesOnly==="_active" ? [ "url^3", "body"] : ["title^2", "body"],
+                "fuzziness": 6,
+              }
+            },
+            "filter": {
+              "regexp": {
+                "url": coursesOnly==="_active" ? ".*[a-zA-Z][a-zA-Z][a-zA-Z].*[1-9][0-9][0-9]" : ".*",
+              }
+            }
+          },
         },
-        "filter": {
-          "regexp": {
-            "url": coursesOnly==="_active" ? ".*[a-zA-Z][a-zA-Z][a-zA-Z].*[1-9][0-9][0-9]" : ".*",
-          }
-       }
-      }
-    }
+        "script": {
+          "source" : "doc['visits'].value/10 * _score",
+        }
+      } 
+    },
+    "sort" :[
+      { "visits":{"order":"desc"} }
+    ]
   }
 
   useEffect(() => {
@@ -192,6 +212,7 @@ function SearchPage({query, all="_active",profs="",courses=""}) {
               <div className="searchPage__snippet">
               {item['_source']['body'].slice(0,3)}
               </div>
+              <div>VISITS: {item['_source']['visits']}</div>
             </div>
           ))} 
           
