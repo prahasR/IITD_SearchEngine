@@ -74,20 +74,24 @@ class IITDSpider(CrawlSpider):
             links_url=links.css('::attr(href)').extract()
             links_text=links.css('::text').extract()
             link_dict=self.extract_links(response,links_url,links_text)
+            check=''.join(response.css("body::text").extract()).strip()
             remove='\n \t \f \r \b'
+            whole_body=''
             for text in links_text:
                 text=text.lstrip(remove)
                 text=text.rstrip(remove)
 
             for img in link_img:
                 clean_link_img.append(response.urljoin(img))
-                
+            for i in body:
+                whole_body+=i
+
             item = {
                 "url":response.url,    
                 "status":response.status,
                 "title":response.css('title::text').get(),
                 "meta_data":response.css('meta').extract(),
-                "body":body,
+                "body":whole_body,
                 "image_urls":clean_link_img,
                 "crawled_on":datetime.datetime.now(),
                 "links":link_dict

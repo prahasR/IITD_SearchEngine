@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "./SearchPage.css";
 import { actionTypes } from "../reducer";
+import parse from 'html-react-parser';
 import { useStateValue } from "../stateProvider";
 import triggerSearch from "../search";
 import { Link } from "react-router-dom";
@@ -43,14 +44,12 @@ function SearchPage({query, all="_active",profs="",courses=""}) {
     "from": (page-1)*10,
     "size": 10,
     "query": {
-      "script_score": {
-        "query":{
-          "bool": {  
+      "bool": {  
             "must" : {
               "multi_match" : {
                 "query":      term ?? location['pathname'].split("/")[2],
-                "fields":     profsOnly==="_active" ? [ "url^3", "body"] : coursesOnly==="_active" ? [ "url^3", "body"] : ["title^2", "body"],
-                "fuzziness": 6,
+                "fields":   profsOnly==="_active" ? [ "url^3", "body"] : coursesOnly==="_active" ? [ "url^3", "body"] :["body"],
+                "fuzziness": "AUTO",
               }
             },
             "filter": {
@@ -58,11 +57,13 @@ function SearchPage({query, all="_active",profs="",courses=""}) {
                 "url": coursesOnly==="_active" ? ".*[a-zA-Z][a-zA-Z][a-zA-Z].*[1-9][0-9][0-9]" : ".*",
               }
             }
-          }
-        },
-        "script": {
-          "source" : "doc['visits'].value/10 * _score",
-        },   
+      }
+    },
+    "highlight" : {
+      "pre_tags" : ["<b>"],
+      "post_tags" : ["</b>"],
+      "fields" : {
+        "body" : {}
       }
     },
     "sort" :[
@@ -73,14 +74,12 @@ function SearchPage({query, all="_active",profs="",courses=""}) {
     "from": (page-1)*10,
     "size": 10,
     "query": {
-      "script_score": {
-        "query" :{
-          "bool": {  
+      "bool": {  
             "must" : {
               "multi_match" : {
                 "query":      term ?? location['pathname'].split("/")[2],
-                "fields":     profsOnly==="_active" ? [ "url^3", "body"] : coursesOnly==="_active" ? [ "url^3", "body"] : ["title^2", "body"],
-                "fuzziness": 6,
+                "fields":   profsOnly==="_active" ? [ "url^3", "body"] : coursesOnly==="_active" ? [ "url^3", "body"] :["body"],
+                "fuzziness": "AUTO",
               }
             },
             "filter": {
@@ -88,12 +87,14 @@ function SearchPage({query, all="_active",profs="",courses=""}) {
                 "url": coursesOnly==="_active" ? ".*[a-zA-Z][a-zA-Z][a-zA-Z].*[1-9][0-9][0-9]" : ".*",
               }
             }
-          },
-        },
-        "script": {
-          "source" : "doc['visits'].value/10 * _score",
-        }
-      } 
+      },
+    },
+    "highlight" : {
+      "pre_tags" : ["<b>"],
+      "post_tags" : ["</b>"],
+      "fields" : {
+        "body" : {}
+      }
     },
     "sort" :[
       { "visits":{"order":"desc"} }
@@ -191,6 +192,10 @@ function SearchPage({query, all="_active",profs="",courses=""}) {
               <CourseIcon/>
               <span>Courses</span>
             </button>
+            <button className={'searchPage_option'} onClick={searchImg}>
+              <ImageIcon/>
+              <span>Images</span>
+            </button>
             </div>
       </div>
 
@@ -209,9 +214,13 @@ function SearchPage({query, all="_active",profs="",courses=""}) {
               {item['_source']['url'] && item['_source']['title'] && <a href={item['_source']['url']} className="searchPage__resultTitle" onClick={() => linkClicked(item['_source'])}>
               <h2><img src={`http://www.google.com/s2/favicons?domain=`+item['_source']['url']}/>{" " + item['_source']['title']}</h2>
               </a>}
-              <div className="searchPage__snippet">
-              {item['_source']['body'].slice(0,3)}
-              </div>
+              {item['highlight']['body'].map((found) =>(
+                  <div className="searchPage__snippet">
+                  <div className="foundElement">{parse(found)}</div>
+            
+                  {/* <div className="foundElement" dangerouslySetInnerHTML={{__html: found}} /> */}
+                  </div>
+              ))}
               <div>VISITS: {item['_source']['visits']}</div>
             </div>
           ))} 
