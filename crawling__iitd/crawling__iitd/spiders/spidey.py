@@ -20,13 +20,11 @@ class CustomLinkExtractor(LinkExtractor):
 
 class IITDSpider (CrawlSpider):
     name = 'IITD' # crawler name
-    #allowed_domains = [''] #starting domains
-    start_urls = ['https://www.cse.iitd.ac.in/~bagchi/courses/COL106_21-22'] #start url
-
-    custom_settings = {
-        "AUTOTHROTTLE_ENABLED": True, #Override the same settings in settings.py and enable cookies
-        "DOWNLOAD_DELAY": 5
-    }
+    allowed_domains = [
+        'iitd.ac.in',
+        'iitd.ernet.in'
+    ]
+    start_urls = ['https://home.iitd.ac.in/'] 
 
     rules = (
         #Configure the crawl list page rule
