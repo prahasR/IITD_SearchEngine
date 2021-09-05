@@ -27,12 +27,13 @@ var client = new elasticsearch.Client({
     // If you have set username and password
 });
 
-function SearchPage({query, all="_active",profs="",courses=""}) {
+function SearchPage({query, all="_active",profs="",courses="", images=""}) {
   const [{ term, data }, dispatch] = useStateValue();
   const [page, setPage] = useState(1);
   const [allActive, setAllActive] = useState(all);
   const [profsOnly, setProfsOnly] = useState(profs);
   const [coursesOnly, setCoursesOnly] = useState(courses);
+  const [imagesOnly, setImagesOnly] = useState(images);
   const history = useHistory();
   const handleChange = (event, value) => {
     setPage(value);
@@ -138,16 +139,25 @@ function SearchPage({query, all="_active",profs="",courses=""}) {
     setAllActive("_active");
     setProfsOnly("");
     setCoursesOnly("");
+    setImagesOnly("");
   }
   const profsOnlyCall = () => { 
     setAllActive("");
     setProfsOnly("_active");
     setCoursesOnly("");
+    setImagesOnly("");
   }
   const coursesOnlyCall = () => { 
     setAllActive("");
     setProfsOnly("");
     setCoursesOnly("_active");
+    setImagesOnly("");
+  }
+  const imagesOnlyCall = () => { 
+    setAllActive("");
+    setProfsOnly("");
+    setCoursesOnly("");
+    setImagesOnly("_active");
   }
   const searchImg = (e) => {
     //e.preventDefault();
@@ -192,7 +202,7 @@ function SearchPage({query, all="_active",profs="",courses=""}) {
               <CourseIcon/>
               <span>Courses</span>
             </button>
-            <button className={'searchPage_option'} onClick={searchImg}>
+            <button className={'searchPage_option' + imagesOnly} onClick={()=>imagesOnlyCall()}>
               <ImageIcon/>
               <span>Images</span>
             </button>
@@ -205,8 +215,27 @@ function SearchPage({query, all="_active",profs="",courses=""}) {
           <p className="searchPage__resultCount">
             {data['hits']['total']['value']} hits for '<strong>{term ?? location['pathname'].split("/")[2]}</strong>' ({data['took']} milliseconds) ・ Couldn't find your needle? <u>Report</u>
           </p>        
-
-           {data['hits']['hits'].map((item) => (
+          
+           {imagesOnly==='_active'?
+           data['hits']['hits'].map((item) => (
+                <div className="imagePage__result" key={item['_source']['id']}>
+                {/* <a className="imagePage__resultLink" href={item['_source']['url']}>
+                  {item['_source']['url']}
+                </a> */}
+                {item['_source']['linked_images']["img"].map((image,index) => (
+                  <div class="imagePage_image" key={index}>
+                    <a href={item['_source']['url']}><img src={image} width="300px" height="300px"/></a>
+                  </div>
+                ))}
+                {/* {item['_source']['url'] && <a href={item['_source']['url']} className="searchPage__resultTitle">
+                <img src={item['_source']['linked_img'][1]}/>
+                </a>} */}
+                
+                </div> 
+            
+            ))
+           :
+           data['hits']['hits'].map((item) => (
             <div className="searchPage__result" key={item['_source']['id']}>
               <a className="searchPage__resultLink" href={item['_source']['url']} onClick={() => linkClicked(item['_source'])}>
                 {item['_source']['url']}

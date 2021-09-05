@@ -242,17 +242,7 @@ function SearchImg({query}) {
                 </a>} */}
                 
                 </div> 
-            //   <div className="searchPage__result" key={item['_source']['id']}>
-            //     <a className="searchPage__resultLink" href={item['_source']['url']}>
-            //       {item['_source']['url']}
-            //     </a>
-            //     {item['_source']['url'] && item['_source']['title'] && <a href={item['_source']['url']} className="searchPage__resultTitle">
-            //     <h2><img src={`http://www.google.com/s2/favicons?domain=`+item['_source']['url']}/>{" " + item['_source']['title'].slice(7, -8)}</h2>
-            //     </a>}
-            //     <div className="searchPage__snippet">
-            //     {item['_source']['link_text']}
-            //     </div>
-            //   </div> 
+            
             ))}
             </div></div>
           // {/* </div> */}
