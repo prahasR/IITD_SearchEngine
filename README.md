@@ -23,9 +23,7 @@ to start the crawler
 
 elastic_search index = iitd_sites
 
-Crawler limit - 100 pages
+Crawler limit - 110 pages
+(limit is set to 110 pages but it is printing 100 pages on terminal, has to be corrected)
 
-Issues
--Code written to index 100 pages, but kibana shows 110 pages indexed, ater the craler stops.
-
-Functionality enabled to limit the no. of requests made to iitd_sites
+Functionality enabled to limit the no. of requests made to iitd.ac.in per second
