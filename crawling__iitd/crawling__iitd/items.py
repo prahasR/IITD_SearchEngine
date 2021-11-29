@@ -68,8 +68,8 @@ class CrawlingIitdItem(scrapy.Item):
         es_client.indices.refresh(ELASTIC_INDEX_NAME) #to get the count of documents indexed in "iitd-sites" on ES, refreshing is required.
         es_len=es_client.cat.count(ELASTIC_INDEX_NAME, params={"format": "json"})
         
-        if int(es_len[0]['count'])>100: #you can define total number of documents you want to index in ES
-            print("100 DOCUMENTS INDEXED--------------","\n")
+        if int(es_len[0]['count'])>=20000: #you can define total number of documents you want to index in ES
+            print("Almost 20000 DOCUMENTS INDEXED--------------","\n")
             os._exit(0)
         
         if not es_client.exists(index=ELASTIC_INDEX_NAME, id=response_url):
@@ -85,7 +85,7 @@ class CrawlingIitdItem(scrapy.Item):
                           "visits":0
                         })
 
-        if len(bulk_lst)>=10:
+        if len(bulk_lst)>=100:
             bulk(es_client,bulk_lst)
             bulk_lst.clear()
             return
