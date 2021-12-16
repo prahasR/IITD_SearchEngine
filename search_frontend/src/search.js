@@ -6,7 +6,7 @@ import { useStateValue } from "./stateProvider";
 var elasticsearch = require('elasticsearch');
 
 var client = new elasticsearch.Client({
-    host: 'http://localhost:9200/' 
+    host: 'http://elastic:9200/' 
     // http://localhost:9200/ 
     // http://root:12345@localhost:9200/ 
     // If you have set username and password

@@ -1,0 +1,58 @@
+version: '3.7'
+
+services:
+  elastic:
+    # image: "${REGISTRY_NAME}devclubiitd/elasticsearch:0.1"
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.13.2
+    container_name: "elastic"
+    volumes:
+      - elastic_data:/usr/share/elasticsearch/data
+    environment:
+      - discovery.type=single-node
+      - network.host=0.0.0.0
+      - http.cors.enabled=true
+      - http.cors.allow-origin="*"
+    ports:
+      - 9200:9200 # Need to expose for frontend
+    # networks:
+    #   - "internal"
+    restart: "unless-stopped"
+
+  crawler:
+    container_name: "crawler"
+    build: 
+      context: ./Crawler
+      dockerfile: Dockerfile
+    # image: "${REGISTRY_NAME}devclubiitd/haystack_crawler:0.1"
+    restart: "unless-stopped"
+    # networks:
+    #   - "internal"
+    #   - "reverseproxy"
+    environment:
+      - ELASTIC_URI=elastic:9200
+    depends_on:
+      - elastic
+
+  react_app:
+    container_name: "react_app"
+    build:
+      context: ./search_frontend
+      dockerfile: Dockerfile
+    
+    restart: "unless-stopped"
+    ports:
+      - 3000:3000
+    environment:
+      - ELASTIC_URI=elastic:9200
+    depends_on:
+      - elastic
+
+volumes:
+  elastic_data:
+    driver: local #as it is running on local docker environment at the time of development
+
+# networks:
+#   reverseproxy:
+#     external:
+#       name: "reverseproxy"
+#   internal:
