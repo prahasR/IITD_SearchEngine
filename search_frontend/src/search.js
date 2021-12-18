@@ -6,7 +6,7 @@ import { useStateValue } from "./stateProvider";
 var elasticsearch = require('elasticsearch');
 
 var client = new elasticsearch.Client({
-    host: 'http://elastic:9200/' 
+    host: 'http://localhost:9200/' 
     // http://localhost:9200/ 
     // http://root:12345@localhost:9200/ 
     // If you have set username and password
@@ -18,9 +18,9 @@ client.ping({
     requestTimeout: Infinity,
 }, function (error) {
     if (error) {
-        console.trace('Elasticsearch cluster is down!');
+        console.trace('Elasticsearch cluster is down! - TEST ABCDEFGHA');
     } else {
-        console.log('Elasticsearch cluster is up!');
+        console.log('Elasticsearch cluster is up!- TEST ABCDEFGHA');
     }
 });
 
